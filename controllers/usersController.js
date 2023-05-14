@@ -94,8 +94,46 @@ const usersController = {
   },
 
   // Modificar usuario existente
+  editUser: async (req, res) => {
+    try {
+      let userToEdit = await db.Users.findByPk(req.params.id);
 
+      let editedData = await db.Users.update(
+        {
+          name: req.body.name ? req.body.name : userToEdit.name,
+          last_name: req.body.last_name
+            ? req.body.last_name
+            : userToEdit.last_name,
+          email: req.body.email ? req.body.email : userToEdit.last_name,
+          password: req.body.password ? req.body.password : userToEdit.password,
+          avatar: req.body.avatar ? req.body.avatar : userToEdit.avatar,
+        },
+        {
+          where: {
+            id: req.params.id,
+          },
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+    res.redirect("/users");
+  },
   // Eliminar usuario
+
+  deleteUser: async (req, res) => {
+    try {
+      await db.Users.destroy({
+        where: {
+          id: req.params.id,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+
+    res.redirect("/users");
+  },
 };
 
 module.exports = usersController;
