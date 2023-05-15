@@ -3,7 +3,7 @@ module.exports = (sequelize, dataTypes) => {
 
   let cols = {
     id_product_shopping: {
-      type: dataTypes.INTEGER,
+      type: dataTypes.STRING,
       primaryKey: true,
       autoIncrement: false,
       allowNull: false,

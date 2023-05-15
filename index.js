@@ -21,8 +21,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 const usersRouter = require("./routes/users.js");
+const productsRouter = require("./routes/products.js");
 
 app.use("/users", usersRouter);
+app.use("/products", productsRouter);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

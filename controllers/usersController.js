@@ -3,6 +3,10 @@ const db = require("../database/models");
 const sequelize = db.sequelize;
 const { Op } = require("sequelize");
 const moment = require("moment");
+const { validationResult } = require("express-validator");
+
+const { v4: uuidv4 } = require("uuid");
+const bcrypt = require("bcryptjs");
 
 const usersController = {
   // Listar todos los usuarios
@@ -12,14 +16,10 @@ const usersController = {
         include: [{ association: "userCategory" }],
       });
 
-      let usersCategories = await db.UserCategories.findAll({
-        include: [{ association: "user" }],
-      });
-
       let response = {
         status: 200,
         count: users.length,
-        url: "/api/usuarios",
+        url: "/usuarios",
         users: users.map(e => {
           return {
             id: e.id,
@@ -27,7 +27,8 @@ const usersController = {
             last_name: e.last_name,
             email: e.email,
             avatar: e.avatar,
-            detail: `/api/users/${e.id}`,
+            detail: `/users/${e.id}`,
+            password: e.password,
           };
         }),
       };
@@ -59,7 +60,6 @@ const usersController = {
         },
       };
 
-      // res.json(user);
       res.json(response);
     } catch (error) {
       console.log(error);
@@ -69,44 +69,53 @@ const usersController = {
   // Crear nuevo usuario
 
   createNewUser: async (req, res) => {
+    const resultValidation = validationResult(req);
+    if (resultValidation.errors.length > 0)
+      return res.json(resultValidation.mapped());
+
     try {
       let userInDb = await db.Users.findOne({
         where: { email: req.body.email },
       });
 
-      if (userInDb)
-        throw new Error("Cannot register, email already registered");
+      if (userInDb) {
+        throw new Error("Email already registered");
+      }
 
-      let userToCreate = await db.Users.create({
-        id: Number(String(Date.now()).slice(6)),
+      await db.Users.create({
+        id: uuidv4(),
         id_user_category: 1,
         name: req.body.name,
         last_name: req.body.last_name,
         email: req.body.email,
-        password: req.body.password,
+        password: bcrypt.hashSync(req.body.password, 10),
         avatar: req.body.avatar,
       });
-    } catch (error) {
-      console.log(error);
-    }
 
-    res.redirect("/users");
+      res.redirect("/users");
+    } catch (error) {
+      res.json(error.message);
+    }
   },
 
   // Modificar usuario existente
   editUser: async (req, res) => {
     try {
+      const resultValidation = validationResult(req);
+      if (resultValidation.errors.length > 0)
+        return res.json(resultValidation.mapped());
+
       let userToEdit = await db.Users.findByPk(req.params.id);
 
-      let editedData = await db.Users.update(
+      if (!userToEdit) throw new Error("No user found!");
+
+      await db.Users.update(
         {
-          name: req.body.name ? req.body.name : userToEdit.name,
-          last_name: req.body.last_name
-            ? req.body.last_name
-            : userToEdit.last_name,
-          email: req.body.email ? req.body.email : userToEdit.last_name,
-          password: req.body.password ? req.body.password : userToEdit.password,
-          avatar: req.body.avatar ? req.body.avatar : userToEdit.avatar,
+          name: req.body.name,
+          last_name: req.body.last_name,
+          email: req.body.email,
+          password: bcrypt.hashSync(req.body.password, 10),
+          avatar: req.body.avatar,
         },
         {
           where: {
@@ -114,10 +123,10 @@ const usersController = {
           },
         }
       );
+      res.redirect("/users");
     } catch (error) {
-      console.log(error);
+      res.json(error.message);
     }
-    res.redirect("/users");
   },
   // Eliminar usuario
 
