@@ -71,11 +71,74 @@ const productsController = {
     }
   },
   // create product
-  createNewProduct: async (req, res) => {},
+  createNewProduct: async (req, res) => {
+    const resultValidation = validationResult(req);
+
+    console.log(...resultValidation.errors);
+
+    if (resultValidation.errors.length > 0)
+      return res.json(resultValidation.mapped());
+
+    try {
+      await db.Products.create({
+        id_products: uuidv4(),
+        name: req.body.name,
+        description: req.body.description,
+        image: req.file ? req.file.filename : "default-image.jpg",
+        price: req.body.price,
+        category_id: req.body.category,
+      });
+      res.redirect("/products");
+    } catch (error) {
+      res.json(error.message);
+    }
+  },
+
   // edit product
-  editProduct: async (req, res) => {},
+  editProduct: async (req, res) => {
+    try {
+      const resultValidation = validationResult(req);
+
+      // if (resultValidation.errors.length > 0)
+      //   return res.json(resultValidation.mapped());
+
+      let productToEdit = await db.Products.findByPk(req.params.id);
+
+      if (!productToEdit) throw new Error("No product under specified id");
+
+      await db.Products.update(
+        {
+          name: req.body.name,
+          description: req.body.description,
+          image: req.file ? req.file.filename : "default-image.jpg",
+          price: req.body.price,
+          category_id: req.body.category,
+        },
+        {
+          where: {
+            id_products: req.params.id,
+          },
+        }
+      );
+      res.redirect("/products");
+    } catch (error) {
+      res.json(error.message);
+    }
+  },
   // delete product
-  deleteProduct: async (req, res) => {},
+  deleteProduct: async (req, res) => {
+    try {
+      await db.Products.destroy({
+        where: {
+          id_products: req.params.id,
+        },
+      });
+
+      res.redirect("/products");
+    } catch (error) {
+      res.json(error.message);
+    }
+  },
 };
 
 module.exports = productsController;

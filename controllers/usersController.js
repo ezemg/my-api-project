@@ -137,11 +137,11 @@ const usersController = {
           id: req.params.id,
         },
       });
-    } catch (error) {
-      console.log(error);
-    }
 
-    res.redirect("/users");
+      res.redirect("/users");
+    } catch (error) {
+      res.json(error.message);
+    }
   },
 };
 

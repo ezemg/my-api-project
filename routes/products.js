@@ -8,7 +8,11 @@ const productsController = require("../controllers/productsController.js");
 router.get("/", productsController.listAllProducts);
 router.get("/:id", productsController.productDetail);
 
-router.post("/create", productsController.createNewProduct);
+router.post(
+  "/create",
+  dataValidations.createProduct,
+  productsController.createNewProduct
+);
 
 router.put("/edit/:id", productsController.editProduct);
 
